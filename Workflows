@@ -1,0 +1,33 @@
+name: build-and-publish-menu
+on:
+  schedule:
+    - cron: '0 4 * * *'   # daily at 04:00 UTC (adjust if you want)
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && pip install -r requirements.txt
+
+      - name: Run menu fetcher
+        run: |
+          python fetch_menu.py --school pierremont-elementary --menu-type lunch --outdir public
+
+      - name: Deploy to gh-pages (publish 'public' directory)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          deploy_key: ${{ secrets.DEPLOY_KEY }}      # optional (see notes)
+          github_token: ${{ secrets.GITHUB_TOKEN }}  # default token to push
+          publish_dir: ./public
